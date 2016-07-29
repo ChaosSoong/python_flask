@@ -1,5 +1,5 @@
 from flask import Flask, request, render_template
-
+import sqlite3
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
@@ -14,9 +14,15 @@ def signin_form():
 def signin():
     username = request.form['username']
     password = request.form['password']
-    if username=='admin' and password=='password':
+    conn = sqlite3.connect('user.db')
+    cursor = conn.cursor()
+    cursor.execute('select * from user where name=?',(username,))
+    values = cursor.fetchall()
+    if len(values)==0:
+        return render_template('form.html', message='Bad username or password', username=username)
+    elif  username==values[0][0] and password==values[0][1]:
         return render_template('signin-ok.html', username=username)
-    return render_template('form.html', message='Bad username or password', username=username)
-
+    else:
+        return render_template('form.html', message='Bad username or password', username=username)
 if __name__ == '__main__':
     app.run()
